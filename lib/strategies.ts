@@ -6,7 +6,7 @@ import * as fs from 'fs';
 
 import {formatRawGrepResultsToQuickfixEntries} from './format';
 
-const executeCommand = (args: string): Promise<string> => {
+function executeCommand(args: string): Promise<string> {
   return new Promise((resolve, reject) => {
     child_process.exec(args, {}, (error, stdout, stderr) => {
       if (error) {

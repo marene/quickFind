@@ -2,7 +2,7 @@
 
 import * as Oni from 'oni-api';
 
-export const formatRawGrepResultsToQuickfixEntries = (rawGrepResults: string): Oni.Menu.MenuOption[] => {
+export function formatRawGrepResultsToQuickfixEntries(rawGrepResults: string): Oni.Menu.MenuOption[] {
   const lines = rawGrepResults.split('\n');
 
   return lines.map(line => {
@@ -17,7 +17,7 @@ export const formatRawGrepResultsToQuickfixEntries = (rawGrepResults: string): O
   });
 }
 
-export const convertMenuOptionToQuickfixEntry = (menuOption: Oni.Menu.MenuOption): Oni.QuickFixEntry => {
+export function convertMenuOptionToQuickfixEntry(menuOption: Oni.Menu.MenuOption): Oni.QuickFixEntry {
   const splitLabel = menuOption.label.split(':');
 
   return {

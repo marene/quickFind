@@ -1,62 +1,7 @@
 import * as Oni from 'oni-api';
-import * as child_process from 'child_process';
 
-const MAX_MENU_ITEMS = 10;
-
-const executeCommand = (args: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    child_process.exec(args, {}, (error, stdout, stderr) => {
-      if (error) {
-        return reject({
-          error,
-          stderr
-        });
-      }
-
-      return resolve(stdout);
-    });
-  });
-}
-
-const formatRawGrepResultsToQuickfixEntries = (rawGrepResults: string): Oni.Menu.MenuOption[] => {
-  const lines = rawGrepResults.split('\n');
-
-  return lines.map(line => {
-    const resultsMap = line.split(':');
-
-    const menuOption: Oni.Menu.MenuOption = {
-      label: `${resultsMap[0]}:${resultsMap[1]}`,
-      detail: resultsMap[2],
-    };
-
-    return menuOption;
-  });
-}
-
-const gitGrep = async (oni: Oni.Plugin.Api, filterText: string): Promise<Oni.Menu.MenuOption[]> => {
-  if (!filterText) return;
-  const command = `git grep -n ${filterText}`;
-  try {
-    const rawGrepResults = await executeCommand(command);
-    const formattedGrepResults = formatRawGrepResultsToQuickfixEntries(rawGrepResults);
-
-    return formattedGrepResults;
-  } catch (err) {
-    console.warn({ err, command }, '[quickFind] failed to execute command');
-    return [];
-  }
-}
-
-const convertMenuOptionToQuickfixEntry = (menuOption: Oni.Menu.MenuOption): Oni.QuickFixEntry => {
-  const splitLabel = menuOption.label.split(':');
-
-  return {
-    filename: splitLabel[0],
-    lnum: parseInt(splitLabel[1], 10) - 1,
-    col: 0,
-    text: menuOption.detail
-  }
-}
+import * as Strategies from './strategies'
+import * as format from './format';
 
 const selectItemAndPopulateQuickFix = async (oni: Oni.Plugin.Api, quickFixEntry: Oni.QuickFixEntry): Promise<void> =>  {
   try {
@@ -67,19 +12,19 @@ const selectItemAndPopulateQuickFix = async (oni: Oni.Plugin.Api, quickFixEntry:
   }
 }
 
-const createQuickFindMenu = (oni: Oni.Plugin.Api): Oni.Menu.MenuInstance => {
+const createQuickFindMenu = (oni: Oni.Plugin.Api, strategy: Strategies.QuickFindStrategy): Oni.Menu.MenuInstance => {
   const menu = oni.menu.create();
 
   menu.show();
 
   menu.onFilterTextChanged.subscribe((filterText: string) => {
-    gitGrep(oni, filterText).then(menuOptions => {
-      menu.setItems(menuOptions.splice(0, MAX_MENU_ITEMS));
+    strategy.find(oni, filterText).then(menuOptions => {
+      menu.setItems(menuOptions);
     });
   });
 
   menu.onItemSelected.subscribe(selectedItem => {
-    const quickFixEntry = convertMenuOptionToQuickfixEntry(selectedItem);
+    const quickFixEntry = format.convertMenuOptionToQuickfixEntry(selectedItem);
     selectItemAndPopulateQuickFix(oni, quickFixEntry);
   });
 
@@ -88,13 +33,13 @@ const createQuickFindMenu = (oni: Oni.Plugin.Api): Oni.Menu.MenuInstance => {
 
 export const activate = (oni: Oni.Plugin.Api) => {
 
+  // I'm a bit worried by this, as strategy will be resolved everytime the command will be executed,
+  // which means a file access attempt everytime.
+  // On the other hand, it'll allow to check that we're still in a git repo consistently
   const quickFind = () => {
-    /*
-     *gitGrep(oni).then(quickfixEntries => {
-     *  oni.populateQuickFix(quickfixEntries);
-     *});
-     */
-    const menu = createQuickFindMenu(oni);
+    const quickFindStrat = Strategies.factory().then(strat => {
+      const menu = createQuickFindMenu(oni, strat);
+    });
   }
 
   oni.commands.registerCommand({

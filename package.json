@@ -1,7 +1,7 @@
 {
   "name": "test",
   "scripts": {
-    "compile": "tsc ./lib/*.ts || true"
+    "build": "tsc"
   },
   "version": "1.0.0",
   "description": "",

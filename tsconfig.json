@@ -1,4 +1,9 @@
 {
   "target": "es2017",
-  "lib": ["ES2015"]
+  "compilerOptions": {
+    "lib": ["ES2015"]
+  },
+  "include": [
+    "./lib/*.ts"
+  ]
 }

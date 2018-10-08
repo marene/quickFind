@@ -18,21 +18,22 @@ const executeCommand = (args: string): Promise<string> => {
   });
 }
 
-const formatRawGrepResultsToQuickfixEntries = (rawGrepResults: string): Oni.QuickFixEntry[] => {
+const formatRawGrepResultsToQuickfixEntries = (rawGrepResults: string): Oni.Menu.MenuOption[] => {
   const lines = rawGrepResults.split('\n');
 
   return lines.map(line => {
     const resultsMap = line.split(':');
-    return {
-      filename: resultsMap[0],
-      lnum: parseInt(resultsMap[1], 10),
-      text: resultsMap[2],
-      col: 1
+
+    const menuOption: Oni.Menu.MenuOption = {
+      label: `${resultsMap[0]}:${resultsMap[1]}`,
+      detail: resultsMap[2],
     };
+
+    return menuOption;
   });
 }
 
-const gitGrep = async (oni: Oni.Plugin.Api, filterText: string): Promise<Oni.QuickFixEntry[]> => {
+const gitGrep = async (oni: Oni.Plugin.Api, filterText: string): Promise<Oni.Menu.MenuOption[]> => {
   if (!filterText) return;
   const command = `git grep -n ${filterText}`;
   try {
@@ -46,15 +47,24 @@ const gitGrep = async (oni: Oni.Plugin.Api, filterText: string): Promise<Oni.Qui
   }
 }
 
-const populateMenu = (menu: Oni.Menu.MenuInstance, quickFindResults: Oni.QuickFixEntry[]): void => {
-  const menuItems = [];
-  for (let i = 0; i < quickFindResults.length && i < MAX_MENU_ITEMS; i++) {
-    menuItems.push({
-      label: `${quickFindResults[i].filename}:${quickFindResults[i].lnum}`,
-      detail: quickFindResults[i].text
-    });
+const convertMenuOptionToQuickfixEntry = (menuOption: Oni.Menu.MenuOption): Oni.QuickFixEntry => {
+  const splitLabel = menuOption.label.split(':');
+
+  return {
+    filename: splitLabel[0],
+    lnum: parseInt(splitLabel[1], 10) - 1,
+    col: 0,
+    text: menuOption.detail
   }
-  menu.setItems(menuItems);
+}
+
+const selectItemAndPopulateQuickFix = async (oni: Oni.Plugin.Api, quickFixEntry: Oni.QuickFixEntry): Promise<void> =>  {
+  try {
+    const buffer = await oni.editors.openFile(quickFixEntry.filename);
+    await buffer.setCursorPosition(quickFixEntry.lnum, quickFixEntry.col);
+  } catch (err) {
+    console.error({ err, quickFixEntry }, '[quickFind] failed to open selected item');
+  }
 }
 
 const createQuickFindMenu = (oni: Oni.Plugin.Api): Oni.Menu.MenuInstance => {
@@ -63,13 +73,14 @@ const createQuickFindMenu = (oni: Oni.Plugin.Api): Oni.Menu.MenuInstance => {
   menu.show();
 
   menu.onFilterTextChanged.subscribe((filterText: string) => {
-    gitGrep(oni, filterText).then(res => {
-      populateMenu(menu, res);
+    gitGrep(oni, filterText).then(menuOptions => {
+      menu.setItems(menuOptions.splice(0, MAX_MENU_ITEMS));
     });
   });
 
-  menu.onItemSelected.subscribe(item => {
-    console.log('onItemSelected => ', item);
+  menu.onItemSelected.subscribe(selectedItem => {
+    const quickFixEntry = convertMenuOptionToQuickfixEntry(selectedItem);
+    selectItemAndPopulateQuickFix(oni, quickFixEntry);
   });
 
   return menu;

@@ -48,6 +48,4 @@ export const activate = (oni: Oni.Plugin.Api) => {
     execute: quickFind,
     name: 'quickFind'
   });
-
-  console.log('TEST ACTIVATED')
 }

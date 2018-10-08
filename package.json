@@ -1,0 +1,22 @@
+{
+  "name": "test",
+  "scripts": {
+    "compile": "tsc ./lib/*.ts || true"
+  },
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "engines": {
+    "oni": "^0.0.1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^10.11.4",
+    "@types/react": "^16.4.15",
+    "oni-api": "0.0.50",
+    "oni-types": "0.0.8",
+    "rimraf": "^2.6.2",
+    "vscode-languageserver-types": "^3.13.0"
+  }
+}

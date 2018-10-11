@@ -22,6 +22,9 @@ export class QuickFindMenu {
         if (results) {
           this._findResults = results;
           this._oniMenu.setItems(this._findResults.toMenuOptions());
+        } else {
+          this._findResults = null;
+          this._oniMenu.setItems([]);
         }
       });
     });

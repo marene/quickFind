@@ -4,10 +4,13 @@ import * as Oni from 'oni-api';
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 
-function executeCommand(args: string): Promise<string> {
+function executeCommand(args: string[]): Promise<string> {
+  const stringArgs = args.map(arg => `"${arg.replace('"', '\\"')}"`).join(' ');
+  console.log('============>', stringArgs);
   return new Promise((resolve, reject) => {
-    child_process.exec(args, {}, (error, stdout, stderr) => {
+    child_process.exec(stringArgs, {}, (error, stdout, stderr) => {
       if (error) {
+        console.error({ error, stringArgs }, '[quickFind.executeCommand] failed to execute command');
         return reject({
           error,
           stderr
@@ -71,7 +74,7 @@ class GitGrepStrategy implements QuickFindStrategy {
   async find(oni: Oni.Plugin.Api, filterText: string): Promise<QuickFindResults> {
     if (!filterText) return null;
 
-    const command = `git grep -n ${filterText}`;
+    const command = ['git', 'grep', '-n', filterText];
 
     try {
       const rawGrepResults = await executeCommand(command);
@@ -88,7 +91,7 @@ class GrepStrategy implements QuickFindStrategy {
   async find(oni: Oni.Plugin.Api, filterText: string): Promise<QuickFindResults> {
     if (!filterText) return null;
 
-    const command = `grep -rn ${filterText}`;
+    const command = ['grep', '-rn', filterText];
 
     try {
       const rawGrepResults = await executeCommand(command);

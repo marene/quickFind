@@ -18,12 +18,12 @@ export function formatRawGrepResultsToQuickfixEntries(rawGrepResults: string): O
 }
 
 export function convertMenuOptionToQuickfixEntry(menuOption: Oni.Menu.MenuOption): Oni.QuickFixEntry {
-  const splitLabel = menuOption.label.split(':');
+  const splitLabel = menuOption.detail.split(':');
 
   return {
     filename: splitLabel[0],
     lnum: parseInt(splitLabel[1], 10) - 1,
     col: 0,
-    text: menuOption.detail
+    text: menuOption.label
   }
 }

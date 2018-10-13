@@ -17,6 +17,25 @@ export class QuickFindMenu {
     this._strategy = strategy;
     this._findResults = null;
 
+    this._oniMenu.setFilterFunction((items: Oni.Menu.MenuOption[], searchString: string): Oni.Menu.IMenuOptionWithHighlights[] => {
+      return items.map(item => {
+        const labelHighlights = new Array(searchString.length);
+        const indexOfSearchString = item.label.indexOf(searchString);
+        for (let i = 0; i < searchString.length; i++) {
+          labelHighlights[i] = indexOfSearchString + i;
+        }
+
+        const ret = Object.assign(
+          {
+            labelHighlights,
+            detailHighlights: [],
+          },
+          item
+        );
+        return ret;
+      });
+    });
+
     this._oniMenu.onFilterTextChanged.subscribe((filterText: string) => {
       this._strategy.find(this._oni, filterText).then(results => {
         if (results) {
@@ -30,22 +49,24 @@ export class QuickFindMenu {
     });
 
     this._oniMenu.onItemSelected.subscribe(selectedItem => {
-      const quickFixEntry = Format.convertMenuOptionToQuickfixEntry(selectedItem);
-      this.selectItemAndPopulateQuickFix(quickFixEntry);
+      this.selectItemAndPopulateQuickFix(selectedItem);
     });
   }
 
-  async selectItemAndPopulateQuickFix(selected: Oni.QuickFixEntry): Promise<void> {
+  async selectItemAndPopulateQuickFix(selected: Oni.Menu.MenuOption): Promise<void> {
+    const quickFixEntry = Format.convertMenuOptionToQuickfixEntry(selected);
     try {
-      const buffer = await this._oni.editors.openFile(
-        selected.filename);
-      await buffer.setCursorPosition(selected.lnum, selected.col);
+      console.log('=====>', quickFixEntry);
+      const buffer = await this._oni.editors.openFile(quickFixEntry.filename);
+      await buffer.setCursorPosition(quickFixEntry.lnum, quickFixEntry.col);
 
       if (this._findResults) {
         this._oni.populateQuickFix(this._findResults.toQuickFixEntries());
+        this._oni.editors.activeEditor.neovim.command(':copen');
+        this._oni.editors.activeEditor.neovim.command(selected.metadata.jumpId);
       }
     } catch (err) {
-      console.error({ err, selected }, '[quickFind] failed to open selected item');
+      console.error({ err, selected, quickFixEntry }, '[quickFind] failed to open selected item');
     }
   }
 

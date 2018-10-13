@@ -6,7 +6,6 @@ import * as fs from 'fs';
 
 function executeCommand(args: string[]): Promise<string> {
   const stringArgs = args.map(arg => `"${arg.replace('"', '\\"')}"`).join(' ');
-  console.log('============>', stringArgs);
   return new Promise((resolve, reject) => {
     child_process.exec(stringArgs, {}, (error, stdout, stderr) => {
       if (error) {
@@ -23,6 +22,7 @@ function executeCommand(args: string[]): Promise<string> {
 }
 
 export interface QuickFindResults {
+  // lineNb and colNb are ZERO BASED
   _rawResults: {fileName: string, lineNb: number, colNb: number, label: string}[];
 
   toQuickFixEntries(): Oni.QuickFixEntry[];
@@ -34,22 +34,24 @@ class GitGrepResults implements QuickFindResults {
 
   constructor(rawResults: string) {
     const lines = rawResults.split('\n');
-    this._rawResults = lines.map(line => {
-      const resultMap = line.split(':');
+    const resultsArray = lines.map(line => {
+      const resultMap = line.match(/^([^:]+):([0-9]+):(.*)$/);
+      if (resultMap === null) return null;
       return {
-        fileName: resultMap[0],
-        lineNb: parseInt(resultMap[1], 10) - 1,
+        fileName: resultMap[1],
+        lineNb: parseInt(resultMap[2], 10) - 1,
         colNb: 0,
-        label: resultMap[2]
+        label: resultMap[3]
       }
     });
+    this._rawResults = resultsArray.filter(result => result !== null);
   }
 
   toQuickFixEntries(): Oni.QuickFixEntry[] {
     return this._rawResults.map(rawResult => {
       return {
         filename: rawResult.fileName,
-        lnum: rawResult.lineNb,
+        lnum: rawResult.lineNb + 1,
         col: rawResult.colNb,
         text: rawResult.label
       };
@@ -57,10 +59,13 @@ class GitGrepResults implements QuickFindResults {
   }
 
   toMenuOptions(): Oni.Menu.MenuOption[] {
-    return this._rawResults.map(rawResult => {
+    return this._rawResults.map((rawResult, index) => {
       return {
-        label: `${rawResult.fileName}:${rawResult.lineNb}`,
-        detail: rawResult.label
+        label: rawResult.label,
+        detail: `${rawResult.fileName}:${rawResult.lineNb + 1}`,
+        metadata: {
+          jumpId: `:${index + 1}`
+        },
       };
     });
   }
@@ -110,10 +115,8 @@ export const strategyFactory = (path?: string): Promise<QuickFindStrategy> => {
 
     fs.access(_path, fs.constants.F_OK, err => {
       if (err) {
-        console.log({ path },'[quickFind.strategies] no .git dir found in path, resolving to non-git strategy');
         return resolve(new GrepStrategy());
       }
-      console.log({ path }, '[quickFind.strategies] found .git dir in path, resolving to git strategy');
       return resolve(new GitGrepStrategy());
     });
   });

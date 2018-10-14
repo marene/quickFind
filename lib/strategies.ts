@@ -29,7 +29,7 @@ export interface QuickFindResults {
   toMenuOptions(): Oni.Menu.MenuOption[];
 }
 
-class GitGrepResults implements QuickFindResults {
+export class GitGrepResults implements QuickFindResults {
   _rawResults: {fileName: string, lineNb: number, colNb: number, label: string}[];
 
   constructor(rawResults: string) {

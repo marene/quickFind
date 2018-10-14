@@ -1,7 +1,9 @@
 {
   "name": "quickFind",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc -p ./tsconfig.json",
+    "test": "tsc -p ./tsconfig.test.json && npm run mocha",
+    "mocha": "./node_modules/mocha/bin/mocha"
   },
   "version": "1.0.0",
   "description": "",
@@ -18,5 +20,9 @@
     "oni-types": "0.0.8",
     "rimraf": "^2.6.2",
     "vscode-languageserver-types": "^3.13.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0"
   }
 }

@@ -9,6 +9,7 @@ To install:
 $> cd ~/.config/oni/plugins
 $> git clone https://github.com/marene/quickFind
 $> cd quickFind
+$> npm install
 $> npm run build
 ```
 Then bind a key map to `marene.quickFind` in your oni config file, for example:

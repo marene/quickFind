@@ -4,12 +4,19 @@ import * as Oni from 'oni-api';
 import * as child_process from 'child_process';
 import * as fs from 'fs';
 
-function executeCommand(args: string[]): Promise<string> {
-  const stringArgs = args.map(arg => `"${arg.replace('"', '\\"')}"`).join(' ');
+function buildStringArgs(args: string[]): string {
+  return args.map(arg => `"${arg.replace('"', '\\"')}"`).join(' ');
+}
+
+function pipeCommands(commands: string[]): string {
+  return commands.join(' | ');
+}
+
+function executeCommand(args: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    child_process.exec(stringArgs, {}, (error, stdout, stderr) => {
+    child_process.exec(args, {}, (error, stdout, stderr) => {
       if (error) {
-        console.error({ error, stringArgs }, '[quickFind.executeCommand] failed to execute command');
+        console.error({ error, args }, '[quickFind.executeCommand] failed to execute command');
         return reject({
           error,
           stderr
@@ -76,10 +83,14 @@ export interface QuickFindStrategy {
 }
 
 class GitGrepStrategy implements QuickFindStrategy {
+  _MAX_LINES_NB_OUTPUT = 100;
+
   async find(oni: Oni.Plugin.Api, filterText: string): Promise<QuickFindResults> {
     if (!filterText) return null;
 
-    const command = ['git', 'grep', '-n', filterText];
+    const gitGrepCommand = buildStringArgs(['git', 'grep', '-n', filterText]);
+    const headCommand = buildStringArgs(["head", `-n${this._MAX_LINES_NB_OUTPUT}`]);
+    const command = pipeCommands([gitGrepCommand, headCommand]);
 
     try {
       const rawGrepResults = await executeCommand(command);
@@ -93,10 +104,12 @@ class GitGrepStrategy implements QuickFindStrategy {
 }
 
 class GrepStrategy implements QuickFindStrategy {
+  _MAX_LINES_NB_OUTPUT = 100;
+
   async find(oni: Oni.Plugin.Api, filterText: string): Promise<QuickFindResults> {
     if (!filterText) return null;
 
-    const command = ['grep', '-rn', filterText];
+    const command = buildStringArgs(['grep', '-rn', '-m', String(this._MAX_LINES_NB_OUTPUT), filterText]);
 
     try {
       const rawGrepResults = await executeCommand(command);

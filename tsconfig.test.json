@@ -2,5 +2,16 @@
   "extends": "./tsconfig.json",
   "include": [
     "./test/lib/*.ts"
-    ]
+    ],
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "lib": ["es2016", "dom"],
+    "sourceMap": true,
+
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+
+    "resolveJsonModule": true
+  }
 }

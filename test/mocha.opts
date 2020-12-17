@@ -1,2 +1,4 @@
-test/
---recursive
+--compilers ts:ts-node/register
+--require tsconfig-paths/register
+--require source-map-support/register
+--full-trace

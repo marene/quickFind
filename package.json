@@ -2,7 +2,7 @@
     "name": "quickFind",
     "scripts": {
         "build": "tsc -p ./tsconfig.json",
-        "test": "tsc -p ./tsconfig.test.json && nyc --reporter=lcov npm run mocha ./build/test/lib/*.js",
+        "test": "tsc -p ./tsconfig.test.json && nyc mocha test/**/*.ts",
         "mocha": "./node_modules/mocha/bin/mocha",
         "cover": "nyc mocha test/**/*.ts",
         "test-build": "tsc -p ./tsconfig.test.json"
@@ -53,6 +53,7 @@
         "mocha": "^5.2.0",
         "nyc": "^15.1.0",
         "ts-node": "^9.1.1",
+        "tsconfig-paths": "^3.9.0",
         "typescript": "^3.1.3"
     }
 }

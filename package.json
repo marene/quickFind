@@ -2,7 +2,7 @@
   "name": "quickFind",
   "scripts": {
     "build": "tsc -p ./tsconfig.json",
-    "test": "tsc -p ./tsconfig.test.json && nyc npm run mocha",
+    "test": "tsc -p ./tsconfig.test.json && nyc --reporter=lcov npm run mocha",
     "mocha": "./node_modules/mocha/bin/mocha"
   },
   "version": "1.0.0",

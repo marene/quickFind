@@ -2,7 +2,7 @@
   "name": "quickFind",
   "scripts": {
     "build": "tsc -p ./tsconfig.json",
-    "test": "tsc -p ./tsconfig.test.json && npm run mocha",
+    "test": "tsc -p ./tsconfig.test.json && nyc npm run mocha",
     "mocha": "./node_modules/mocha/bin/mocha"
   },
   "version": "1.0.0",
@@ -16,6 +16,7 @@
   "dependencies": {
     "@types/node": "^10.11.4",
     "@types/react": "^16.4.15",
+    "nyc": "^15.1.0",
     "oni-api": "0.0.50",
     "oni-types": "0.0.8",
     "rimraf": "^2.6.2",

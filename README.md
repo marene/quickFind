@@ -26,3 +26,6 @@ On selection of an item, it will open the file at the right line number, and pop
 # Note
 This plugin is still under development.
 However, it already is working good enough for me to use it at work, so please give it a try, and give me your feedback!
+
+
+FOOBAR
